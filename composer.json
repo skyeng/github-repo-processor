@@ -1,0 +1,13 @@
+{
+    "name": "akovytin/repo-getter",
+    "authors": [
+        {
+            "name": "Aleksandr Kovytin",
+            "email": "kovytin.alexander@gmail.com"
+        }
+    ],
+    "require": {
+        "knplabs/github-api": "^2.6",
+        "php-http/guzzle6-adapter": "^1.1"
+    }
+}
