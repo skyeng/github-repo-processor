@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/env php
 <?php
 require 'vendor/autoload.php';
 require 'prepare.php';
@@ -79,12 +79,31 @@ switch ($cmd) {
             createBranch($repo, $branch);
         }
         break;
+    /**
+     *
+     */
+    case 'pull-request':
+        $repo = $argv[2];
+        $branch = $argv[3];
+
+        if ($repo === 'all') {
+            foreach (scandir("jenkinsfiles/branch") as $file) {
+                if ($file !== '.' && $file !== '..') {
+                    $repo = $file;
+                    createPullRequest($repo, $branch);
+                }
+            }
+        } else {
+            createPullRequest($repo, $branch);
+        }
+        break;
     default:
-        echo "Утилита для обработки Jenkins файлов во всех проектах\n";
+        echo "Утилита для обработки Jenkinsfile`ов во всех проектах\n";
         echo "./main.php [download-originals|upload-files|create-branch]\n";
-        echo "\tdownload-originals\t\t\tЗакачивает Jenkins файлы всех доступных репозиториев организации в папку ./jenkinsfiles/master\n";
+        echo "\tdownload-originals\t\t\tЗакачивает Jenkinsfile`ы всех доступных репозиториев организации в папку ./jenkinsfiles/master\n";
         echo "\tupload-files [all|<repo>] <branch>\tЗагружает конкретный файл или все файлы в соответствующие репозитории в указанную ветку\n";
         echo "\tcreate-branch [all|<repo>] <branch>\tСоздаем новую ветку от мастера\n";
+        echo "\tpull-request [all|<repo>] <branch>\tСоздаем pull-request\n";
         echo "*all - соответствует всем репозиториям, перечисленным в папке branch\n";
         break;
 }
@@ -124,4 +143,18 @@ function createBranch(string $repo, string $branch){
             throw $e;
         }
     }
+}
+
+function createPullRequest(string $repo, string $branch){
+    global $client;
+    global $org;
+
+    echo "Creating pull request of $branch in $repo ... ";
+    $client->pullRequests()->create($org, $repo, [
+        'base'  => 'master',
+        'head'  => $branch,
+        'title' => "[$branch] Jenkinsfile change",
+        'body'  => 'Jenkinsfile change'
+    ]);
+    echo "Done.\n";
 }
