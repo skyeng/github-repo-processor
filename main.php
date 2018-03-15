@@ -16,7 +16,7 @@ switch ($cmd) {
     /**
      *
      */
-    case 'download-originals':
+    case 'get-contents':
         $repos = [];
         $page = 0;
         while (true) {
@@ -32,80 +32,90 @@ switch ($cmd) {
             json_encode($repos, JSON_PRETTY_PRINT)
         );
 
-        // get Jenkinsfile from master
+        $path = $argv[2];
+        $branch = $argv[3] ?? 'master';
+
+        $segs = explode('/', $path);
+        $name = array_pop($segs);
+
+        $dir = "/opt/app/data/$name/$branch";
+        mkdir($dir, 0777, true);
+        // get path's $content from $branch
         foreach ($repos as $repo) {
-            if ($client->repository()->contents()->exists($org, $repo['name'], 'Jenkinsfile')) {
-                $jenkinsFileContents = $client->repository()->contents()->download($org, $repo['name'], 'Jenkinsfile');
-                file_put_contents('jenkinsfiles/master/'.$repo['name'], $jenkinsFileContents);
-                echo $repo['name'].PHP_EOL;
+            if ($client->repository()->contents()->exists($org, $repo['name'], $path, "refs/heads/$branch")) {
+                $content = $client->repository()->contents()->download($org, $repo['name'], $path, "refs/heads/$branch");
+                file_put_contents("$dir/{$repo['name']}", $content);
+                echo "+{$repo['name']}".PHP_EOL;
+            } else {
+                echo "No path in {$repo['name']}, $branch branch".PHP_EOL;
             }
         }
 
         break;
-    /**
-     *
-     */
-    case 'upload-files':
-        $repo = $argv[2];
-        $branch = $argv[3];
-
-        if ($repo === 'all') {
-            foreach (scandir("jenkinsfiles/branch") as $file) {
-                if ($file !== '.' && $file !== '..') {
-                    $repo = $file;
-                    upload($file, $repo, $branch);
-                }
-            }
-        } else {
-            $file = $repo;
-            upload($file, $repo, $branch);
-        }
-        break;
-    /**
-     *
-     */
-    case 'create-branch':
-        $repo = $argv[2];
-        $branch = $argv[3];
-
-        if ($repo === 'all') {
-            foreach (scandir("jenkinsfiles/branch") as $file) {
-                if ($file !== '.' && $file !== '..') {
-                    $repo = $file;
-                    createBranch($repo, $branch);
-                }
-            }
-        } else {
-            createBranch($repo, $branch);
-        }
-        break;
-    /**
-     *
-     */
-    case 'pull-request':
-        $repo = $argv[2];
-        $branch = $argv[3];
-
-        if ($repo === 'all') {
-            foreach (scandir("jenkinsfiles/branch") as $file) {
-                if ($file !== '.' && $file !== '..') {
-                    $repo = $file;
-                    createPullRequest($repo, $branch);
-                }
-            }
-        } else {
-            createPullRequest($repo, $branch);
-        }
-        break;
-    default:
-        echo "Утилита для обработки Jenkinsfile`ов во всех проектах\n";
-        echo "./main.php [download-originals|upload-files|create-branch]\n";
-        echo "\tdownload-originals\t\t\tЗакачивает Jenkinsfile`ы всех доступных репозиториев организации в папку ./jenkinsfiles/master\n";
-        echo "\tupload-files [all|<repo>] <branch>\tЗагружает конкретный файл или все файлы в соответствующие репозитории в указанную ветку\n";
-        echo "\tcreate-branch [all|<repo>] <branch>\tСоздаем новую ветку от мастера\n";
-        echo "\tpull-request [all|<repo>] <branch>\tСоздаем pull-request\n";
-        echo "*all - соответствует всем репозиториям, перечисленным в папке branch\n";
-        break;
+//    /**
+//     *
+//     */
+//    case 'upload-files':
+//        $repo = $argv[2];
+//        $branch = $argv[3];
+//
+//        if ($repo === 'all') {
+//            foreach (scandir("jenkinsfiles/branch") as $file) {
+//                if ($file !== '.' && $file !== '..') {
+//                    $repo = $file;
+//                    upload($file, $repo, $branch);
+//                }
+//            }
+//        } else {
+//            $file = $repo;
+//            upload($file, $repo, $branch);
+//        }
+//        break;
+//    /**
+//     *
+//     */
+//    case 'create-branch':
+//        $repo = $argv[2];
+//        $branch = $argv[3];
+//
+//        if ($repo === 'all') {
+//            foreach (scandir("jenkinsfiles/branch") as $file) {
+//                if ($file !== '.' && $file !== '..') {
+//                    $repo = $file;
+//                    createBranch($repo, $branch);
+//                }
+//            }
+//        } else {
+//            createBranch($repo, $branch);
+//        }
+//        break;
+//    /**
+//     *
+//     */
+//    case 'pull-request':
+//        $repo = $argv[2];
+//        $branch = $argv[3];
+//
+//        if ($repo === 'all') {
+//            foreach (scandir("jenkinsfiles/branch") as $file) {
+//                if ($file !== '.' && $file !== '..') {
+//                    $repo = $file;
+//                    createPullRequest($repo, $branch);
+//                }
+//            }
+//        } else {
+//            createPullRequest($repo, $branch);
+//        }
+//        break;
+//    default:
+//        echo "Утилита для обработки Jenkinsfile`ов во всех проектах\n";
+//        echo "./main.php [download-originals|upload-files|create-branch]\n";
+//        echo "\tdownload-originals\t\t\tЗакачивает Jenkinsfile`ы всех доступных репозиториев организации в папку ./jenkinsfiles/master\n";
+//        echo "\tupload-files [all|<repo>] <branch>\tЗагружает конкретный файл или все файлы в соответствующие репозитории в указанную ветку\n";
+//        echo "\tcreate-branch [all|<repo>] <branch>\tСоздаем новую ветку от мастера\n";
+//        echo "\tpull-request [all|<repo>] <branch>\tСоздаем pull-request\n";
+//        echo "*all - соответствует всем репозиториям, перечисленным в папке branch\n";
+//        break;
 }
 
 function upload(string $file, string $repo, string $branch){

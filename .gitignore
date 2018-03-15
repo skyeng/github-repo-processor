@@ -1,4 +1,4 @@
 repos.json
 vendor/
-jenkinsfiles/
+data/
 .env

@@ -1,15 +1,18 @@
 ### Обрабатываем jenkinsfile для кучи проектов сразу
 
-##### Как установить
+##### Настройка
 
-    $ composer install
-    
-Подставляем свои значения в этот файл
+Подставляем свои значения в файл `.env.sample`
     
     $ cp .env.sample .env
     $ vi .env
 
 ##### Как использовать
+
+docker run --rm -ti \
+    -v /home/akovytin/IdeaProjects/github-repo-processor:/opt/app \
+    --env-file .env \
+    php:7.1-cli-alpine /opt/app/main.php get-contents Jenkinsfile
 
 Перед использованием берем переменные окружения и экспортируем их:
 
