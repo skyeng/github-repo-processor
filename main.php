@@ -14,7 +14,7 @@ $client->authenticate($token, null, Github\Client::AUTH_HTTP_TOKEN);
 @$cmd = $argv[1];
 switch ($cmd) {
     /**
-     *
+     * args: <path_of_file_in_repo> <branch>
      */
     case 'get-contents':
         $repos = [];
@@ -52,43 +52,32 @@ switch ($cmd) {
         }
 
         break;
-//    /**
-//     *
-//     */
-//    case 'upload-files':
-//        $repo = $argv[2];
-//        $branch = $argv[3];
-//
-//        if ($repo === 'all') {
-//            foreach (scandir("jenkinsfiles/branch") as $file) {
-//                if ($file !== '.' && $file !== '..') {
-//                    $repo = $file;
-//                    upload($file, $repo, $branch);
-//                }
-//            }
-//        } else {
-//            $file = $repo;
-//            upload($file, $repo, $branch);
-//        }
-//        break;
-//    /**
-//     *
-//     */
-//    case 'create-branch':
-//        $repo = $argv[2];
-//        $branch = $argv[3];
-//
-//        if ($repo === 'all') {
-//            foreach (scandir("jenkinsfiles/branch") as $file) {
-//                if ($file !== '.' && $file !== '..') {
-//                    $repo = $file;
-//                    createBranch($repo, $branch);
-//                }
-//            }
-//        } else {
-//            createBranch($repo, $branch);
-//        }
-//        break;
+    /**
+     * args: <repo> <branch>
+     */
+    case 'create-branch':
+        $repo = $argv[2];
+        $branch = $argv[3];
+        createBranch($repo, $branch);
+        break;
+    /**
+     * <path_of_file_in_repo> <branch>
+     */
+    case 'commit-files':
+        $path = $argv[2];
+        $branch = $argv[3];
+
+        $segs = explode('/', $path);
+        $name = array_pop($segs);
+
+        $dir = "/opt/app/data/$name/$branch";
+        foreach (scandir($dir) as $file) {
+            if ($file !== '.' && $file !== '..') {
+                $repo = $file;
+                upload("$dir/$file", $path, $repo, $branch);
+            }
+        }
+        break;
 //    /**
 //     *
 //     */
@@ -118,7 +107,7 @@ switch ($cmd) {
 //        break;
 }
 
-function upload(string $file, string $repo, string $branch){
+function upload(string $localpath, string $repopath, string $repo, string $branch){
     global $client;
     global $org;
 
@@ -126,10 +115,10 @@ function upload(string $file, string $repo, string $branch){
     $client->repository()->contents()->update(
         $org,
         $repo,
-        'Jenkinsfile',
-        file_get_contents("jenkinsfiles/branch/$file"),
-        "[$branch] Update Jenkinsfile for new version of shared library",
-        $client->repository()->contents()->show($org, $repo, 'Jenkinsfile', "refs/heads/$branch")['sha'],
+        $repopath,
+        file_get_contents($localpath),
+        "[$branch] ".getenv('COMMIT_MESSAGE'),
+        $client->repository()->contents()->show($org, $repo, $repopath, "refs/heads/$branch")['sha'],
         $branch
     );
 }
