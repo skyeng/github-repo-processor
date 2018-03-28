@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 require 'vendor/autoload.php';
-require 'prepare.php';
+require 'utils.php';
 
 global $org;
 $org = getenv('GITHUB_ORGANIZATION');
@@ -26,11 +26,11 @@ switch ($cmd) {
             }
             $repos = array_merge($repos, $buf);
         }
-        // debug
-        file_put_contents(
-            'repos.json',
-            json_encode($repos, JSON_PRETTY_PRINT)
-        );
+//        // debug
+//        file_put_contents(
+//            'repos.json',
+//            json_encode($repos, JSON_PRETTY_PRINT)
+//        );
 
         $path = $argv[2];
         $branch = $argv[3] ?? 'master';
@@ -75,7 +75,7 @@ switch ($cmd) {
         foreach (scandir($dir) as $file) {
             if ($file !== '.' && $file !== '..') {
                 $repo = $file;
-                upload("$dir/$file", $path, $repo, $branch, $message);
+                commitFile("$dir/$file", $path, $repo, $branch, $message);
             }
         }
         break;
@@ -86,66 +86,9 @@ switch ($cmd) {
         $repo = $argv[2];
         $branch = $argv[3];
         $message = $argv[4];
-        createPullRequest($repo, $branch, $message);
+        sendPullRequest($repo, $branch, $message);
         break;
-//    default:
-//        echo "Утилита для обработки Jenkinsfile`ов во всех проектах\n";
-//        echo "./main.php [download-originals|upload-files|create-branch]\n";
-//        echo "\tdownload-originals\t\t\tЗакачивает Jenkinsfile`ы всех доступных репозиториев организации в папку ./jenkinsfiles/master\n";
-//        echo "\tupload-files [all|<repo>] <branch>\tЗагружает конкретный файл или все файлы в соответствующие репозитории в указанную ветку\n";
-//        echo "\tcreate-branch [all|<repo>] <branch>\tСоздаем новую ветку от мастера\n";
-//        echo "\tpull-request [all|<repo>] <branch>\tСоздаем pull-request\n";
-//        echo "*all - соответствует всем репозиториям, перечисленным в папке branch\n";
-//        break;
+    default:
+        echo "ERROR: Unknown command\n";
 }
 
-function upload(string $localpath, string $repopath, string $repo, string $branch, String $message){
-    global $client;
-    global $org;
-
-    echo 'Updating '.$repo.PHP_EOL;
-    $client->repository()->contents()->update(
-        $org,
-        $repo,
-        $repopath,
-        file_get_contents($localpath),
-        "[$branch] $message",
-        $client->repository()->contents()->show($org, $repo, $repopath, "refs/heads/$branch")['sha'],
-        $branch
-    );
-}
-
-function createBranch(string $repo, string $branch){
-    global $client;
-    global $org;
-
-    echo "Creating branch $branch in $repo ... ";
-    $master = $client->repositories()->branches($org, $repo, 'master');
-    try {
-        $client->git()->references()->create($org, $repo, [
-            'ref' => "refs/heads/$branch",
-            'sha' => $master['commit']['sha'],
-        ]);
-        echo "Done\n";
-    } catch (\Github\Exception\RuntimeException $e) {
-        if ($e->getMessage() === 'Reference already exists') {
-            echo "Branch already exists, skipping\n";
-        } else {
-            throw $e;
-        }
-    }
-}
-
-function createPullRequest(string $repo, string $branch, String $message){
-    global $client;
-    global $org;
-
-    echo "Creating pull request of $branch in $repo ... ";
-    $client->pullRequests()->create($org, $repo, [
-        'base'  => 'master',
-        'head'  => $branch,
-        'title' => "$branch",
-        'body'  => "$message"
-    ]);
-    echo "Done.\n";
-}
