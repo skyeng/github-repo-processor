@@ -4,7 +4,7 @@ function commitFile(string $localpath, string $repopath, string $repo, string $b
     global $client;
     global $org;
 
-    echo 'Updating '.$repo.PHP_EOL;
+    echo "Commiting $repopath to $repo ... ";
     $client->repository()->contents()->update(
         $org,
         $repo,
@@ -14,6 +14,7 @@ function commitFile(string $localpath, string $repopath, string $repo, string $b
         $client->repository()->contents()->show($org, $repo, $repopath, "refs/heads/$branch")['sha'],
         $branch
     );
+    echo "Done.\n";
 }
 
 function createBranch(string $repo, string $branch){
@@ -41,7 +42,7 @@ function sendPullRequest(string $repo, string $branch, String $message){
     global $client;
     global $org;
 
-    echo "Creating pull request of $branch in $repo ... ";
+    echo "Sending pull request of $branch in $repo ... ";
     $client->pullRequests()->create($org, $repo, [
         'base'  => 'master',
         'head'  => $branch,
