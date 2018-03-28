@@ -61,11 +61,12 @@ switch ($cmd) {
         createBranch($repo, $branch);
         break;
     /**
-     * <path_of_file_in_repo> <branch>
+     * <path_of_file_in_repo> <branch> <message>
      */
     case 'commit-files':
         $path = $argv[2];
         $branch = $argv[3];
+        $message = $argv[4];
 
         $segs = explode('/', $path);
         $name = array_pop($segs);
@@ -74,28 +75,19 @@ switch ($cmd) {
         foreach (scandir($dir) as $file) {
             if ($file !== '.' && $file !== '..') {
                 $repo = $file;
-                upload("$dir/$file", $path, $repo, $branch);
+                upload("$dir/$file", $path, $repo, $branch, $message);
             }
         }
         break;
-//    /**
-//     *
-//     */
-//    case 'pull-request':
-//        $repo = $argv[2];
-//        $branch = $argv[3];
-//
-//        if ($repo === 'all') {
-//            foreach (scandir("jenkinsfiles/branch") as $file) {
-//                if ($file !== '.' && $file !== '..') {
-//                    $repo = $file;
-//                    createPullRequest($repo, $branch);
-//                }
-//            }
-//        } else {
-//            createPullRequest($repo, $branch);
-//        }
-//        break;
+    /**
+     * args: <repo> <branch> <message>
+     */
+    case 'pull-request':
+        $repo = $argv[2];
+        $branch = $argv[3];
+        $message = $argv[4];
+        createPullRequest($repo, $branch, $message);
+        break;
 //    default:
 //        echo "Утилита для обработки Jenkinsfile`ов во всех проектах\n";
 //        echo "./main.php [download-originals|upload-files|create-branch]\n";
@@ -107,7 +99,7 @@ switch ($cmd) {
 //        break;
 }
 
-function upload(string $localpath, string $repopath, string $repo, string $branch){
+function upload(string $localpath, string $repopath, string $repo, string $branch, String $message){
     global $client;
     global $org;
 
@@ -117,7 +109,7 @@ function upload(string $localpath, string $repopath, string $repo, string $branc
         $repo,
         $repopath,
         file_get_contents($localpath),
-        "[$branch] ".getenv('COMMIT_MESSAGE'),
+        "[$branch] $message",
         $client->repository()->contents()->show($org, $repo, $repopath, "refs/heads/$branch")['sha'],
         $branch
     );
@@ -144,7 +136,7 @@ function createBranch(string $repo, string $branch){
     }
 }
 
-function createPullRequest(string $repo, string $branch){
+function createPullRequest(string $repo, string $branch, String $message){
     global $client;
     global $org;
 
@@ -152,8 +144,8 @@ function createPullRequest(string $repo, string $branch){
     $client->pullRequests()->create($org, $repo, [
         'base'  => 'master',
         'head'  => $branch,
-        'title' => "[$branch] Jenkinsfile change",
-        'body'  => 'Jenkinsfile change'
+        'title' => "$branch",
+        'body'  => "$message"
     ]);
     echo "Done.\n";
 }
