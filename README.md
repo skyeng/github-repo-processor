@@ -46,7 +46,7 @@
         --env-file .env \
         -w="/opt/app" \
         php:7.1-cli-alpine \
-        ./main.php commit-files deploy/capistrano/config/deploy.rb INFRA-1921 "own COMPOSER_HOME for each project"
+        ./main.php commit-files deploy/capistrano/config/deploy.rb INFRA-1921 "[INFRA-1921] own COMPOSER_HOME for each project"
     
 Отправить pull-реквест
 

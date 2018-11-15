@@ -10,7 +10,7 @@ function commitFile(string $localpath, string $repopath, string $repo, string $b
         $repo,
         $repopath,
         file_get_contents($localpath),
-        "[$branch] $message",
+        $message,
         $client->repository()->contents()->show($org, $repo, $repopath, "refs/heads/$branch")['sha'],
         $branch
     );
@@ -46,8 +46,8 @@ function sendPullRequest(string $repo, string $branch, String $message){
     $client->pullRequests()->create($org, $repo, [
         'base'  => 'master',
         'head'  => $branch,
-        'title' => "$branch",
-        'body'  => "$message"
+        'title' => $branch,
+        'body'  => $message
     ]);
     echo "Done.\n";
 }
