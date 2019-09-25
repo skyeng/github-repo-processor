@@ -20,7 +20,7 @@
 Пример:
 
     $ docker run --rm -ti \
-        -v /home/akovytin/IdeaProjects/github-repo-processor:/opt/app \
+        -v $(pwd):/opt/app \
         --env-file .env \
         -w="/opt/app" \
         php:7.1-cli-alpine \
@@ -33,7 +33,7 @@
 Пример:
 
     docker run --rm -ti \
-        -v /home/akovytin/IdeaProjects/github-repo-processor:/opt/app \
+        -v $(pwd):/opt/app \
         --env-file .env \
         -w="/opt/app" \
         php:7.1-cli-alpine \
@@ -46,7 +46,7 @@
 Пример:
 
     docker run --rm -ti \
-        -v /home/akovytin/IdeaProjects/github-repo-processor:/opt/app \
+        -v $(pwd):/opt/app \
         --env-file .env \
         -w="/opt/app" \
         php:7.1-cli-alpine \
@@ -59,7 +59,7 @@
 Пример:
 
     docker run --rm -ti \
-        -v /home/akovytin/IdeaProjects/github-repo-processor:/opt/app \
+        -v $(pwd):/opt/app \
         --env-file .env \
         -w="/opt/app" \
         php:7.1-cli-alpine \
