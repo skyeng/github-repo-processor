@@ -46,8 +46,8 @@ function sendPullRequest(string $repo, string $branch, String $message){
     $client->pullRequests()->create($org, $repo, [
         'base'  => 'master',
         'head'  => $branch,
-        'title' => $branch,
-        'body'  => $message
+        'title' => $message,
+        'body'  => ''
     ]);
     echo "Done.\n";
 }
