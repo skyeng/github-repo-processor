@@ -80,13 +80,30 @@ switch ($cmd) {
         }
         break;
     /**
-     * args: <repo> <branch> <message>
+     * args: <repo> <branch> <title>
      */
     case 'pull-request':
         $repo = $argv[2];
         $branch = $argv[3];
-        $message = $argv[4];
-        sendPullRequest($repo, $branch, $message);
+        $title = $argv[4];
+        sendPullRequest($repo, $branch, $title);
+        break;
+    /**
+     * args: <repo> <branch> <title>
+     */
+    case 'rename-pull-request':
+        $repo = $argv[2];
+        $branch = $argv[3];
+        $title = $argv[4];
+        renamePullRequest($repo, $branch, $title);
+        break;
+    /**
+     * args: <repo> <branch>
+     */
+    case 'merge-pull-request':
+        $repo = $argv[2];
+        $branch = $argv[3];
+        mergePullRequest($repo, $branch);
         break;
     default:
         echo "ERROR: Unknown command\n";

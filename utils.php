@@ -38,7 +38,7 @@ function createBranch(string $repo, string $branch){
     }
 }
 
-function sendPullRequest(string $repo, string $branch, String $message){
+function sendPullRequest(string $repo, string $branch, string $title){
     global $client;
     global $org;
 
@@ -46,8 +46,51 @@ function sendPullRequest(string $repo, string $branch, String $message){
     $client->pullRequests()->create($org, $repo, [
         'base'  => 'master',
         'head'  => $branch,
-        'title' => $message,
+        'title' => $title,
         'body'  => ''
     ]);
+    echo "Done.\n";
+}
+
+function getPullRequestID(string $repo, string $branch){
+    global $client;
+    global $org;
+
+    $prs = $client->pullRequests()->all($org, $repo, [
+        'head' => "$org:$branch"
+    ]);
+    if (count($prs) > 1) {
+        throw new LogicException("There's several PR for this branch: " . join(', ',
+                array_map(function($pr){return $pr['url'];}, $prs)
+            )
+        );
+    } else {
+        return $prs[0]['number'];
+    }
+}
+
+function renamePullRequest(string $repo, string $branch, string $title){
+    global $client;
+    global $org;
+
+    echo "Renaming pull request of $branch in $repo ... ";
+    $client->pullRequests()->update($org, $repo, getPullRequestID($repo, $branch), [
+        'title' => $title,
+    ]);
+    echo "Done.\n";
+}
+
+function mergePullRequest(string $repo, string $branch){
+    global $client;
+    global $org;
+
+    echo "Merging pull request of $branch in $repo ... ";
+    $client->pullRequests()->merge(
+        $org,
+        $repo,
+        getPullRequestID($repo, $branch),
+        "Merge $branch",
+        $client->repositories()->branches($org, $repo, $branch)['commit']['sha']
+    );
     echo "Done.\n";
 }
