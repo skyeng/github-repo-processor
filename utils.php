@@ -1,19 +1,30 @@
 <?php
 
-function commitFile(string $localpath, string $repopath, string $repo, string $branch, String $message){
+function commitFile(string $localpath, string $repopath, string $repo, string $branch, String $message, $new = false){
     global $client;
     global $org;
 
     echo "Commiting $repopath to $repo ... ";
-    $client->repository()->contents()->update(
-        $org,
-        $repo,
-        $repopath,
-        file_get_contents($localpath),
-        $message,
-        $client->repository()->contents()->show($org, $repo, $repopath, "refs/heads/$branch")['sha'],
-        $branch
-    );
+    if ($new) {
+        $client->repository()->contents()->create(
+            $org,
+            $repo,
+            $repopath,
+            file_get_contents($localpath),
+            $message,
+            $branch
+        );
+    } else {
+        $client->repository()->contents()->update(
+            $org,
+            $repo,
+            $repopath,
+            file_get_contents($localpath),
+            $message,
+            $client->repository()->contents()->show($org, $repo, $repopath, "refs/heads/$branch")['sha'],
+            $branch
+        );
+    }
     echo "Done.\n";
 }
 
@@ -36,6 +47,15 @@ function createBranch(string $repo, string $branch){
             throw $e;
         }
     }
+}
+
+function deleteBranch(string $repo, string $branch){
+    global $client;
+    global $org;
+
+    echo "Deleting branch $branch in $repo ... ";
+    $client->git()->references()->remove($org, $repo, "heads/$branch");
+    echo "Done\n";
 }
 
 function sendPullRequest(string $repo, string $branch, string $title){

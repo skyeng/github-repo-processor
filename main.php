@@ -61,6 +61,14 @@ switch ($cmd) {
         createBranch($repo, $branch);
         break;
     /**
+     * args: <repo> <branch>
+     */
+    case 'delete-branch':
+        $repo = $argv[2];
+        $branch = $argv[3];
+        deleteBranch($repo, $branch);
+        break;
+    /**
      * <path_of_file_in_repo> <branch> <message>
      */
     case 'commit-files':
