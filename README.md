@@ -80,3 +80,9 @@
         -w="/opt/app" \
         php:7.1-cli-alpine \
         sh -c "ls data/deploy.rb/INFRA-1921 | xargs -I % ./main.php pull-request % INFRA-1921 'own COMPOSER_HOME for each project'"
+
+Добавить новый файл в каждый репозиторий
+
+    main.php add-files data/untracked/ .github/ INFRADEV-5 "Adds new directory to repo"
+    
+    Все файлы в директории будут добавлены в ветку так, как будто вы набрали `git add data/untracked/*`
