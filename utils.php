@@ -114,3 +114,24 @@ function mergePullRequest(string $repo, string $branch){
     );
     echo "Done.\n";
 }
+
+function getDirectoryFiles(string $path): array
+{
+    if (!is_dir($path)) {
+        return [];
+    }
+
+    $files = [];
+
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
+    /** @var SplFileInfo $index */
+    foreach ($iterator as $index) {
+        if ($index->isDir()) {
+            continue;
+        }
+
+        $files[] = $index->getPathname();
+    }
+
+    return $files;
+}

@@ -1,5 +1,8 @@
 #!/usr/bin/env php
 <?php
+
+use Http\Client\Exception;
+
 require 'vendor/autoload.php';
 require 'utils.php';
 
@@ -68,6 +71,47 @@ switch ($cmd) {
         $branch = $argv[3];
         deleteBranch($repo, $branch);
         break;
+
+    case 'add-files':
+        $path = $argv[2];
+        $repoPath = $argv[3];
+        $branch = $argv[4];
+        $message = $argv[5];
+
+        $isDirectory = false;
+
+        $files = [];
+        if (is_dir($path)) {
+            $files = getDirectoryFiles($path);
+            $isDirectory = true;
+        } else {
+            $files[] = $path;
+        }
+
+        $repos = $client->repositories()->org($org);
+        foreach ($repos as $repo) {
+            $repoName = $repo['name'] ?? null;
+            foreach ($files as $filePath) {
+                try {
+                    $repoBranch = $client->repositories()->branches($org, $repoName, $branch);
+                } catch (Exception $exception) {
+                    createBranch($repoName, $branch);
+                }
+
+                if ($isDirectory) {
+                    $repoPath = str_replace($path, '', $filePath); // crop data/untracked
+                }
+
+                try {
+                    commitFile($filePath, $repoPath, $repoName, $branch, $message, true);
+                } catch (\Exception $exception) {
+                    echo "Skipped {$repoPath} in {$repoName}. Maybe {$repoPath} already exists? " . PHP_EOL;
+                }
+            }
+        }
+
+        break;
+
     /**
      * <path_of_file_in_repo> <branch> <message>
      */
