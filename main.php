@@ -77,6 +77,7 @@ switch ($cmd) {
         $repoPath = $argv[3];
         $branch = $argv[4];
         $message = $argv[5];
+        $forcePullRequest = $argv[6] ?? null;
 
         $isDirectory = false;
 
@@ -88,14 +89,29 @@ switch ($cmd) {
             $files[] = $path;
         }
 
-        $repos = $client->repositories()->org($org);
+        $repos = [];
+        $page = 0;
+        $continue = true;
+        do {
+            $batch = $client->repositories()->org($org, ['page' => ++$page]);
+            if (!empty($batch)) {
+                $repos = array_merge($repos, $batch);
+            } else {
+                $continue = false;
+            }
+        } while ($continue);
+
         foreach ($repos as $repo) {
             $repoName = $repo['name'] ?? null;
             foreach ($files as $filePath) {
                 try {
                     $repoBranch = $client->repositories()->branches($org, $repoName, $branch);
                 } catch (Exception $exception) {
-                    createBranch($repoName, $branch);
+                    try {
+                        createBranch($repoName, $branch);
+                    } catch (\Github\Exception\RuntimeException $e) {
+                        echo "Repository {$repoName} was archived " . PHP_EOL;
+                    }
                 }
 
                 if ($isDirectory) {
@@ -106,6 +122,19 @@ switch ($cmd) {
                     commitFile($filePath, $repoPath, $repoName, $branch, $message, true);
                 } catch (\Exception $exception) {
                     echo "Skipped {$repoPath} in {$repoName}. Maybe {$repoPath} already exists? " . PHP_EOL;
+                }
+            }
+        }
+
+        if ($forcePullRequest !== null) {
+            foreach ($repos as $repo) {
+                $repoName = $repo['name'] ?? null;
+                try {
+                    sendPullRequest($repoName, $branch, $message);
+                } catch (\Github\Exception\ValidationFailedException $e) {
+                    echo "Skipped {$repoName}. Maybe PR already exists? " . PHP_EOL;
+                } catch (\Github\Exception\RuntimeException $e) {
+                    echo "Skipped {$repoName}. Repository was archived " . PHP_EOL;
                 }
             }
         }
