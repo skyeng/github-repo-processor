@@ -72,6 +72,8 @@
 
     main.php pull-request <repo> <branch> <message>
     
+при этом, дескрипшон для PR можно вписать в файл body.txt (он лежит в корне).
+
 Пример:
 
     docker run --rm -ti \
@@ -79,7 +81,7 @@
         --env-file .env \
         -w="/opt/app" \
         php:7.1-cli-alpine \
-        sh -c "ls data/deploy.rb/INFRA-1921 | xargs -I % ./main.php pull-request % INFRA-1921 'own COMPOSER_HOME for each project'"
+        sh -c "ls data/deploy.rb/INFRA-1921 | xargs -I % ./main.php pull-request % INFRA-1921 '[INFRA-1921] own COMPOSER_HOME for each project'"
 
 Добавить новый файл в каждый репозиторий
 

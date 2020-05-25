@@ -67,7 +67,7 @@ function sendPullRequest(string $repo, string $branch, string $title){
         'base'  => 'master',
         'head'  => $branch,
         'title' => $title,
-        'body'  => ''
+        'body'  => file_get_contents('body.txt'),
     ]);
     echo "Done.\n";
 }
