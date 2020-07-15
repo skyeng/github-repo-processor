@@ -63,13 +63,16 @@ function sendPullRequest(string $repo, string $branch, string $title){
     global $org;
 
     echo "Sending pull request of $branch in $repo ... ";
-    $client->pullRequests()->create($org, $repo, [
+    $result = $client->pullRequests()->create($org, $repo, [
         'base'  => 'master',
         'head'  => $branch,
         'title' => $title,
         'body'  => file_get_contents('body.txt'),
     ]);
+
     echo "Done.\n";
+
+    return $result;
 }
 
 function getPullRequestID(string $repo, string $branch){
@@ -79,6 +82,11 @@ function getPullRequestID(string $repo, string $branch){
     $prs = $client->pullRequests()->all($org, $repo, [
         'head' => "$org:$branch"
     ]);
+
+    if (empty($prs)) {
+        throw new \RuntimeException(sprintf('No PR for branch %s', $branch));
+    }
+
     if (count($prs) > 1) {
         throw new LogicException("There's several PR for this branch: " . join(', ',
                 array_map(function($pr){return $pr['url'];}, $prs)

@@ -72,6 +72,61 @@ switch ($cmd) {
         deleteBranch($repo, $branch);
         break;
 
+    case 'rm-files':
+        $path = $argv[2];
+        $branch = $argv[3];
+        $message = $argv[4];
+
+        $files[] = $path;
+
+        $repos = [];
+        $page = 0;
+        $continue = true;
+        do {
+            $batch = $client->repositories()->org($org, ['page' => ++$page]);
+            if (!empty($batch)) {
+                $repos = array_merge($repos, $batch);
+            } else {
+                $continue = false;
+            }
+        } while ($continue);
+
+        foreach ($repos as $repo) {
+            $repoName = $repo['name'] ?? null;
+            foreach ($files as $filePath) {
+                try {
+                    $repoBranch = $client->repositories()->branches($org, $repoName, $branch);
+                } catch (Exception $exception) {
+                    try {
+                        createBranch($repoName, $branch);
+                    } catch (\Github\Exception\RuntimeException $e) {
+                        echo "Repository {$repoName} was archived " . PHP_EOL;
+                    }
+                }
+
+                try {
+                    $sha = $client->repository()->contents()->show($org, $repoName, $path)['sha'] ?? null;
+                    if ($sha === null) {
+                        echo "Skipped {$path} in {$repoName}. Sha does not exists " . PHP_EOL;
+                        continue;
+                    }
+
+                    $client->repository()->contents()->rm(
+                        $org,
+                        $repoName,
+                        $path,
+                        $message,
+                        $sha,
+                        $branch
+                    );
+                } catch (\Exception $exception) {
+                    echo "Cannot remove {$path} in {$repoName} " . PHP_EOL;
+                }
+            }
+        }
+
+        break;
+
     case 'add-files':
         $path = $argv[2];
         $repoPath = $argv[3];
@@ -121,7 +176,11 @@ switch ($cmd) {
                 try {
                     commitFile($filePath, $repoPath, $repoName, $branch, $message, true);
                 } catch (\Exception $exception) {
-                    echo "Skipped {$repoPath} in {$repoName}. Maybe {$repoPath} already exists? " . PHP_EOL;
+                    try {
+                        commitFile($filePath, $repoPath, $repoName, $branch, $message, false);
+                    } catch (\Exception $exception) {
+                        echo "Skipped {$repoPath} in {$repoName}. Maybe {$repoPath} already exists? " . PHP_EOL;
+                    }
                 }
             }
         }
@@ -135,6 +194,110 @@ switch ($cmd) {
                     echo "Skipped {$repoName}. Maybe PR already exists? " . PHP_EOL;
                 } catch (\Github\Exception\RuntimeException $e) {
                     echo "Skipped {$repoName}. Repository was archived " . PHP_EOL;
+                }
+            }
+        }
+
+        break;
+
+    case 'pull-request-all-repo':
+        $branch = $argv[2];
+        $message = $argv[3];
+
+        $repos = [];
+        $page = 0;
+        $continue = true;
+        do {
+            $batch = $client->repositories()->org($org, ['page' => ++$page]);
+            if (!empty($batch)) {
+                $repos = array_merge($repos, $batch);
+            } else {
+                $continue = false;
+            }
+        } while ($continue);
+
+        foreach ($repos as $repo) {
+            $repoName = $repo['name'] ?? null;
+            try {
+                $result = sendPullRequest($repoName, $branch, $message);
+                echo 'URL: ' . $result['html_url'] . PHP_EOL;
+                echo 'Diff: ' . $result['diff_url'] . PHP_EOL;
+            } catch (\Github\Exception\ValidationFailedException $e) {
+                echo "Skipped {$repoName}. Maybe PR already exists? " . PHP_EOL;
+            } catch (\Github\Exception\RuntimeException $e) {
+                echo "Skipped {$repoName}. Repository was archived " . PHP_EOL;
+            }
+        }
+
+        break;
+
+    case 'merge-all-pull-requests':
+        $branch = $argv[2];
+
+        $repos = [];
+        $page = 0;
+        $continue = true;
+        do {
+            $batch = $client->repositories()->org($org, ['page' => ++$page]);
+            if (!empty($batch)) {
+                $repos = array_merge($repos, $batch);
+            } else {
+                $continue = false;
+            }
+        } while ($continue);
+
+        foreach ($repos as $repo) {
+            $repoName = $repo['name'] ?? null;
+            try {
+                mergePullRequest($repoName, $branch);
+            } catch (\Exception $e) {
+                echo "Skipped {$repoName}" . PHP_EOL;
+            }
+        }
+
+        break;
+
+    case 'protect-branch':
+        $repos = [];
+        $page = 0;
+        $continue = true;
+
+        do {
+            $batch = $client->repositories()->org($org, ['page' => ++$page]);
+            if (!empty($batch)) {
+                $repos = array_merge($repos, $batch);
+            } else {
+                $continue = false;
+            }
+        } while ($continue);
+
+        foreach ($repos as $repo) {
+            continue; // stop
+
+            $repoName = $repo['name'] ?? null;
+            try {
+                $params = [
+                    'Commit Message Lint',
+                ];
+                $protection = $client->api('repo')->protection()->addStatusChecksContexts($org, $repoName, 'master', $params);
+                echo "Requiring checks for {$repoName}... Done " . PHP_EOL;
+            } catch (\Exception $e) {
+                try {
+                    $params = [
+                        'required_status_checks' => [
+                            'strict' => true,
+                            'contexts' => [
+                                'Commit Message Lint',
+                            ],
+                        ],
+                        'required_pull_request_reviews' => null,
+                        'enforce_admins' => true,
+                        'restrictions' => null,
+                    ];
+                    $protection = $client->api('repo')->protection()->update($org, $repoName, 'master', $params);
+                    echo "Protecting master and requiring checks for {$repoName}... Done " . PHP_EOL;
+                } catch (\Exception $e) {
+                    echo "Skipped {$repoName}" . PHP_EOL;
                 }
             }
         }
