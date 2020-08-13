@@ -246,15 +246,17 @@ switch ($cmd) {
             }
         } while ($continue);
 
+        $count = 0;
         foreach ($repos as $repo) {
             $repoName = $repo['name'] ?? null;
             try {
                 mergePullRequest($repoName, $branch);
+                $count++;
             } catch (\Exception $e) {
                 echo "Skipped {$repoName}" . PHP_EOL;
             }
         }
-
+        echo 'Total processed: ' . $count;
         break;
 
     case 'protect-branch':
