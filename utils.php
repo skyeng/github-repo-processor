@@ -33,8 +33,8 @@ function createBranch(string $repo, string $branch){
     global $org;
 
     echo "Creating branch $branch in $repo ... ";
-    $master = $client->repositories()->branches($org, $repo, 'master');
     try {
+        $master = $client->repositories()->branches($org, $repo, 'master');
         $client->git()->references()->create($org, $repo, [
             'ref' => "refs/heads/$branch",
             'sha' => $master['commit']['sha'],
@@ -45,7 +45,10 @@ function createBranch(string $repo, string $branch){
             echo "Branch already exists, skipping\n";
         } elseif ($e->getMessage() === 'Repository was archived so is read-only.') {
             echo "Repository was archived so is read-only, skipping\n";
+        } elseif ($e->getMessage() === 'Not Found') {
+            echo "Repository was not found (lack of permissions?), skipping\n";
         } else {
+            echo "Unknown error, message was: '{$e->getMessage()}'\n";
             throw $e;
         }
     }
