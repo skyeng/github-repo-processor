@@ -43,6 +43,8 @@ function createBranch(string $repo, string $branch){
     } catch (\Github\Exception\RuntimeException $e) {
         if ($e->getMessage() === 'Reference already exists') {
             echo "Branch already exists, skipping\n";
+        } elseif ($e->getMessage() === 'Repository was archived so is read-only.') {
+            echo "Repository was archived so is read-only, skipping\n";
         } else {
             throw $e;
         }
