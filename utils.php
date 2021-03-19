@@ -74,7 +74,7 @@ function sendPullRequest(string $repo, string $branch, string $title){
         'title' => $title,
         'body'  => file_get_contents('body.txt'),
     ]);
-    echo "Done: " . $pr['url'] . " \n";
+    echo "Done: " . $pr['html_url'] . " \n";
 }
 
 function getPullRequestID(string $repo, string $branch){
