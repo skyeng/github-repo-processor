@@ -68,13 +68,13 @@ function sendPullRequest(string $repo, string $branch, string $title){
     global $org;
 
     echo "Sending pull request of $branch in $repo ... ";
-    $client->pullRequests()->create($org, $repo, [
+    $pr = $client->pullRequests()->create($org, $repo, [
         'base'  => 'master',
         'head'  => $branch,
         'title' => $title,
         'body'  => file_get_contents('body.txt'),
     ]);
-    echo "Done.\n";
+    echo "Done: " . $pr['url'] . " \n";
 }
 
 function getPullRequestID(string $repo, string $branch){
