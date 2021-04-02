@@ -1,12 +1,12 @@
-# Сервис github-repo-processor
+# github-repo-processor
 
 ## Краткое описание
 Инструмент для обрабатки одинаковых файлов в нескольких репозиториях для "организации" на Github
 
 ## Ответственные:
 
-- Code Owner: Александр Ковытин
-- Product Owner: Артём Науменко
+- Code Owner: [Александр Ковытин](https://skyeng.slack.com/team/U7ZTTP9JL)
+- Product Owner: [Артем Науменко](https://skyeng.slack.com/team/U9AGNCBC1)
 - Команда: Infra DevOps
 
 ## Slack-каналы 
