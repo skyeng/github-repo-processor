@@ -16,6 +16,35 @@ $client->authenticate($token, null, Github\Client::AUTH_HTTP_TOKEN);
 
 @$cmd = $argv[1];
 switch ($cmd) {
+    case 'get-repos':
+        $repos = [];
+        $page = 0;
+        while (true) {
+            $buf = $client->repositories()->org($org, ['page' => ++$page]);
+            if (count($buf) === 0) {
+                break;
+            }
+            $repos = array_merge($repos, $buf);
+        }
+
+        $minRepos = [];
+        foreach ($repos as $repo) {
+            if (!$repo['archived']) {
+//                $minRepos [] = [
+//                    'html_url' => $repo['html_url'],
+//                    'full_name' => $repo['full_name'],
+//                    'archived' => $repo['archived'],
+//                ];
+                $minRepos [] = "${repo['full_name']}\t${repo['html_url']}\n";
+            }
+        }
+
+        file_put_contents(
+            'repos.txt',
+            $minRepos
+        );
+
+        break;
     /**
      * args: <path_of_file_in_repo> <branch>
      */
@@ -186,6 +215,58 @@ switch ($cmd) {
         $branch = $argv[3];
         mergePullRequest($repo, $branch);
         break;
+//    /**
+//     * args: <query>
+//     */
+//    case 'search':
+////        $matches = [];
+////        $page = 0;
+////        while (true) {
+////            ++$page;
+////
+////            if (file_exists("matches{$page}.json")) {
+////
+////                echo "page: {$page} skipping" . PHP_EOL;
+////
+////            } else {
+////                echo "page: {$page} processing ... ";
+////                sleep(60);
+////
+////                $buf = $client->search()->code($argv[2], 'updated', 'desc', $page)['items'];
+////                if (count($buf) === 0) {
+////                    break;
+////                }
+////
+////                file_put_contents(
+////                    "matches{$page}.json",
+////                    json_encode($buf, JSON_PRETTY_PRINT)
+////                );
+////
+////                echo "complete!" . PHP_EOL;
+////            }
+////        }
+//
+//        $matches = [];
+//        for ($i=1; $i<=10; $i++) {
+//            $matches = array_merge($matches, json_decode(file_get_contents("matches$i.json"), true));
+//        }
+//
+//        $dir = "/opt/app/data/search_result";
+//        mkdir($dir, 0777, true);
+//
+////        $matches = json_decode(file_get_contents('matches.json'), true);
+//        foreach ($matches as $match) {
+//            $downloadToFile = "$dir/{$match['repository']['name']}.{$match['name']}";
+//            if (!file_exists($downloadToFile))
+//            {
+//                $content = $client->repository()->contents()->download($org, $match['repository']['name'], $match['path'], "refs/heads/master");
+//                file_put_contents($downloadToFile, $content);
+//                echo "+{$match['repository']['name']}" . PHP_EOL;
+//            }
+//        }
+//
+//        break;
+//
     default:
         echo "ERROR: Unknown command\n";
 }

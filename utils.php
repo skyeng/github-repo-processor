@@ -68,18 +68,30 @@ function sendPullRequest(string $repo, string $branch, string $title){
     global $org;
 
     echo "Sending pull request of $branch in $repo ... ";
-    $pr = $client->pullRequests()->create($org, $repo, [
-        'base'  => 'master',
-        'head'  => $branch,
-        'title' => $title,
-        'body'  => file_get_contents('body.txt'),
-    ]);
-    echo "Done: " . $pr['html_url'] . " \n";
+    try {
+        $pr = $client->pullRequests()->create($org, $repo, [
+            'base' => 'master',
+            'head' => $branch,
+            'title' => $title,
+            'body' => file_get_contents('body.txt'),
+        ]);
+        $prUrl = $pr['html_url'];
+    } catch (\Github\Exception\ValidationFailedException $e) {
+        if (strpos($e->getMessage(), 'No commits between') !== false) {
+            echo $e->getMessage()."\n";
+        } elseif (strpos($e->getMessage(), 'A pull request already exists') !== false) {
+            echo $e->getMessage()."\n";
+        } else {
+            throw $e;
+        }
+        $prUrl = 'NaN';
+    }
+    echo "Done: $prUrl\n";
 }
 
 function getPullRequestID(string $repo, string $branch){
     global $client;
-    global $org;
+    global $org;something from upstream
 
     $prs = $client->pullRequests()->all($org, $repo, [
         'head' => "$org:$branch"
