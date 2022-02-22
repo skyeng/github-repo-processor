@@ -1,28 +1,32 @@
 # github-repo-processor
 
 ## Краткое описание
+
 Инструмент для обрабатки одинаковых файлов в нескольких репозиториях для "организации" на Github
 
 ## Ответственные:
 
-- Code Owner: [Александр Ковытин](https://skyeng.slack.com/team/U7ZTTP9JL)
+- Code Owner: [Роман Бурнашев](https://skyeng.slack.com/team/U019D3NJRGS)
 - Product Owner: [Артем Науменко](https://skyeng.slack.com/team/U9AGNCBC1)
-- Команда: Infra DevOps
+- Команда: InfraDevOps
 
-## Slack-каналы 
+## Slack-каналы
+
     - #infra
-    
+
 ## Технологический стек
-* Код: PHP7.1
+
+- Код: PHP7.1
 
 ## Документация
 
 ### Настройка
+
 Подставляем свои значения в файл `.env.sample`
-    
+
     $ cp .env.sample .env
     $ vi .env
-    
+
 необходимо вписать организацию на Github, токен (получить можно здесь https://github.com/settings/tokens) и коммитера.
 
 Далее, можно скачать файл из всех репозиториев, внести правку во все экземпляры, закоммитить правки в отдельную ветки и создать PRы.
@@ -45,7 +49,7 @@
 Создание бранчей
 
     main.php create-branch <repo> <branch>
-    
+
 Пример:
 
     docker run --rm -ti \
@@ -54,11 +58,11 @@
         -w="/opt/app" \
         php:7.1-cli-alpine \
         sh -c "ls data/deploy.rb/INFRA-1921 | xargs -I % ./main.php create-branch % INFRA-1921"
-    
+
 Закоммитить файлы
 
     main.php commit-files <path_of_file_in_repo> <branch> <message>
-    
+
 Пример:
 
     docker run --rm -ti \
@@ -67,11 +71,11 @@
         -w="/opt/app" \
         php:7.1-cli-alpine \
         ./main.php commit-files deploy/capistrano/config/deploy.rb INFRA-1921 "[INFRA-1921] own COMPOSER_HOME for each project"
-    
+
 Отправить pull-реквест
 
     main.php pull-request <repo> <branch> <message>
-    
+
 при этом, дескрипшон для PR можно вписать в файл body.txt (он лежит в корне).
 
 Пример:
@@ -86,5 +90,5 @@
 Добавить новый файл в каждый репозиторий
 
     main.php add-files data/untracked/ .github/ INFRADEV-5 "Adds new directory to repo"
-    
+
     Все файлы в директории будут добавлены в ветку так, как будто вы набрали `git add data/untracked/*`
